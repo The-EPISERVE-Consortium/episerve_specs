@@ -74,10 +74,6 @@
         { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/agent" } }
       ]
     },
-    "additionalProperty": {
-      "type": "array",
-      "description": "Legacy parameter list (schema.org PropertyValue) still read by the platform; must agree with episerve:parameters."
-    },
 
     "episerve:task": { "$ref": "#/$defs/task" },
     "episerve:parameters": { "$ref": "#/$defs/parameters" },

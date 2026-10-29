@@ -107,6 +107,20 @@ form, it is restricted to flat parameters:
 - `rules` lists, in words, constraints between parameters or between
   parameters and the data. They are shown to users, not checked; the model
   checks them at run time.
+- `additionalProperty` (the schema.org parameter list) is not part of the
+  card and is an error; the parameters are only in `episerve:parameters`.
+
+A config is checked against the card with
+
+```python
+from episerve_specs import check_model_config, model_config_defaults
+
+issues = check_model_config(card, config)   # card or only its episerve:parameters
+defaults = model_config_defaults(card)      # {name: default}
+```
+
+Each issue is an error with the parameter as its path (empty for a missing
+required parameter). A `null` value is not a value: it fails the type.
 
 ## `episerve:inputs`
 
@@ -193,16 +207,6 @@ a warning when missing.
 | `limitations` | what it cannot do, known failure cases |
 | `trainingData` | what it was trained on, or that it is not trained |
 | `references` | URLs of papers, documentation, code |
-
-## `additionalProperty` (transition)
-
-The platform still reads the parameters from schema.org `additionalProperty`
-(CKAN `model_parameters`, the API's config check, the models'
-`config_schema.py`). Until it reads `episerve:parameters`, a card keeps both,
-and they must agree: same names, `valueRequired` ↔ `required`, `valueType`
-(default `integer`) ↔ `type`, `minValue`/`maxValue` ↔ `minimum`/`maximum`,
-`value` ↔ `default`. Any difference is an error. A card without
-`additionalProperty` gets a warning.
 
 ## Changes to this spec
 

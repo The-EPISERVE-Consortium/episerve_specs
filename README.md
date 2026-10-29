@@ -12,7 +12,7 @@ spec text and examples.
 ## Use
 
 ```bash
-pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.1.0"
+pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.2.0"
 
 episerve-validate fdo.json                     # spec from the file's conformsTo
 episerve-validate --spec model-card fdo.json   # name it (e.g. for a card without conformsTo)
@@ -31,14 +31,23 @@ result = validate(card)            # or validate(card, spec="model-card", versio
 result.valid                       # no errors (warnings allowed)
 for issue in result.issues:        # Issue(severity, path, message)
     print(issue)
-result.to_dict()                   # includes "validator": "episerve-specs 0.1.0"
+result.to_dict()                   # includes "validator": "episerve-specs 0.2.0"
+
+from episerve_specs import check_model_config
+check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
+```
+
+As a dependency (no git needed):
+
+```
+episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.2.0.tar.gz
 ```
 
 ### In a model repository's CI
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: The-EPISERVE-Consortium/episerve_specs@v0.1.0
+- uses: The-EPISERVE-Consortium/episerve_specs@v0.2.0
   with:
     files: fdo.json        # default
     strict: "false"        # default
@@ -52,18 +61,19 @@ all get the same result. The result records which validator produced it.
 | Where | What | State |
 |---|---|---|
 | Model repository CI | the action above | available |
-| Sync flow (`workflow-prefect__sync-lakefs-ckan`) | validates each model's card, stores the result in CKAN | planned |
+| Sync flow (`workflow-prefect__sync-lakefs-ckan`) | validates each model's card, stores the card sections and the result in CKAN | available |
+| API server | checks a run's config with `check_model_config` | available |
 | API server | `POST /validate/{spec}` for people, the UI and agents; serves the schemas at `/schemas/{spec}/v{N}.json` | planned |
 | Writers of other formats | in their tests | planned |
 
 Until the API serves the schemas, the `conformsTo` URLs are identifiers only;
 the schemas themselves are in this repository.
 
-Checks that need platform data (does this config fit this registered model,
-does this benchmark's data fit this model) belong to the API, not here.
+Checks that need platform data (which card belongs to this image, does this
+benchmark's data fit this model) belong to the API, not here.
 
-Policy: when the platform starts checking model cards, an invalid card only
-produces a **warning** at first; the model still runs.
+Policy: an invalid card only produces a **warning**: the sync flow stores the
+result in CKAN, and the model is still registered and runs.
 
 ## Versions
 
@@ -71,8 +81,7 @@ produces a **warning** at first; the model still runs.
   `https://api.episerve.zib.de/schemas/<spec>/v<N>.json`, named in the
   document's `conformsTo`. A released version is only extended compatibly; a
   breaking change is a new version next to it.
-- Package releases (`v0.1.0`, …) only add specs or spec versions, so updating
-  the package never makes a valid document invalid.
+- Package releases (`v0.1.0`, …) add specs, spec versions and helpers.
 
 ## Adding a spec
 

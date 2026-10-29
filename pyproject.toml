@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "episerve-specs"
-version = "0.1.0"
+version = "0.2.0"
 description = "Specifications, JSON Schemas and validators for EPISERVE platform formats"
 readme = "README.md"
 requires-python = ">=3.10"

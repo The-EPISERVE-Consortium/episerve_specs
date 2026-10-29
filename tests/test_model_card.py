@@ -66,7 +66,6 @@ def test_non_ghcr_image_warns(timesfm):
 
 def test_parameter_needs_description(timesfm):
     del timesfm["episerve:parameters"]["properties"]["prediction_length"]["description"]
-    del timesfm["additionalProperty"][1]["description"]
     assert has(validate(timesfm), "episerve:parameters/properties/prediction_length", "'description' is a required property")
 
 
@@ -88,26 +87,22 @@ def test_required_must_be_declared(timesfm):
 
 def test_required_parameter_with_default(timesfm):
     timesfm["episerve:parameters"]["properties"]["history_length"]["default"] = 10
-    timesfm["additionalProperty"][0]["value"] = 10
     assert has(validate(timesfm), "episerve:parameters/properties/history_length/default", "must not have a default")
 
 
 def test_default_must_fit(timesfm):
     timesfm["episerve:parameters"]["properties"]["prediction_offset"]["default"] = -1
-    timesfm["additionalProperty"][2]["value"] = -1
     assert has(validate(timesfm), "episerve:parameters/properties/prediction_offset/default", "does not fit")
 
 
 def test_bounds_order(timesfm):
     p = timesfm["episerve:parameters"]["properties"]["prediction_length"]
     p["minimum"], p["maximum"] = 600, 512
-    timesfm["additionalProperty"][1]["minValue"] = 600
     assert has(validate(timesfm), "episerve:parameters/properties/prediction_length", "lower bound is greater")
 
 
 def test_optional_parameter_without_default_warns(timesfm):
     del timesfm["episerve:parameters"]["properties"]["prediction_offset"]["default"]
-    del timesfm["additionalProperty"][2]["value"]
     assert has(validate(timesfm), "episerve:parameters/properties/prediction_offset", "without a default", "warning")
 
 
@@ -116,34 +111,11 @@ def test_open_parameters_warn(timesfm):
     assert has(validate(timesfm), "episerve:parameters/additionalProperties", "misspelt", "warning")
 
 
-# ── legacy additionalProperty ─────────────────────────────────────────────────
+# ── old parameter list ────────────────────────────────────────────────────────
 
-def test_legacy_must_agree(timesfm):
-    timesfm["additionalProperty"][1]["maxValue"] = 100
-    assert has(validate(timesfm), "additionalProperty/1/maxValue", "episerve:parameters says 512")
-
-
-def test_legacy_missing_parameter(timesfm):
-    del timesfm["additionalProperty"][2]
-    assert has(validate(timesfm), "additionalProperty", "'prediction_offset' is declared in episerve:parameters but missing here")
-
-
-def test_legacy_extra_parameter(timesfm):
-    timesfm["additionalProperty"].append({"name": "ghost", "valueRequired": False})
-    assert has(validate(timesfm), "additionalProperty/3", "'ghost' is not declared")
-
-
-def test_legacy_absent_warns(timesfm):
-    del timesfm["additionalProperty"]
-    result = validate(timesfm)
-    assert result.valid
-    assert has(result, "additionalProperty", "takes the parameters from here only", "warning")
-
-
-def test_legacy_value_type_defaults_to_integer(baseline):
-    p = baseline["episerve:parameters"]["properties"]["horizon_weeks"]
-    p["type"] = "number"
-    assert has(validate(baseline), "additionalProperty/0/valueType", "'integer' here")
+def test_additional_property_is_rejected(timesfm):
+    timesfm["additionalProperty"] = [{"name": "history_length"}]
+    assert has(validate(timesfm), "additionalProperty", "declare the parameters in episerve:parameters")
 
 
 # ── task ──────────────────────────────────────────────────────────────────────
@@ -273,7 +245,7 @@ def test_missing_documentation_warns(timesfm):
 
 # ── robustness ────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("key", ["episerve:task", "episerve:parameters", "episerve:inputs", "episerve:outputs", "additionalProperty"])
+@pytest.mark.parametrize("key", ["episerve:task", "episerve:parameters", "episerve:inputs", "episerve:outputs"])
 @pytest.mark.parametrize("bad", [None, 3, "x", [1], {"a": 1}])
 def test_malformed_sections_do_not_crash(timesfm, key, bad):
     timesfm[key] = bad

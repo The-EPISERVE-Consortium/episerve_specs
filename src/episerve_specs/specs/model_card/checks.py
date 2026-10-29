@@ -32,17 +32,20 @@ def _dict(value) -> dict:
 
 def check_v1(card: dict) -> list[Issue]:
     issues: list[Issue] = []
-    for check in (_unknown_keys, _identity, _parameters, _legacy_parameters, _task, _inputs, _outputs, _recommended):
+    for check in (_unknown_keys, _identity, _parameters, _task, _inputs, _outputs, _recommended):
         issues += check(card)
     return issues
 
 
 def _unknown_keys(card: dict) -> list[Issue]:
-    return [
+    issues = [
         Issue("error", key, f"unknown key; version 1 defines {', '.join(sorted(KNOWN_KEYS))}")
         for key in sorted(card)
         if key.startswith("episerve:") and key not in KNOWN_KEYS
     ]
+    if "additionalProperty" in card:
+        issues.append(Issue("error", "additionalProperty", "not part of the model card; declare the parameters in episerve:parameters"))
+    return issues
 
 
 def _identity(card: dict) -> list[Issue]:
@@ -107,51 +110,6 @@ def _parameters(card: dict) -> list[Issue]:
             "warning", f"{base}/additionalProperties",
             "not false: a misspelt config.json key is accepted without notice",
         ))
-    return issues
-
-
-def _legacy_parameters(card: dict) -> list[Issue]:
-    """The platform still reads ``additionalProperty`` (CKAN model_parameters, API config check, the models'
-    own config_schema.py); while it does, it must say the same as ``episerve:parameters``."""
-    if not isinstance(card.get("episerve:parameters"), dict):
-        return []  # nothing to compare with; reported by the schema
-    params = _dict(card.get("episerve:parameters"))
-    props = _dict(params.get("properties"))
-    required = set(_list(params.get("required")))
-    if "additionalProperty" not in card:
-        return [Issue(
-            "warning", "additionalProperty",
-            "missing; until the platform reads episerve:parameters it takes the parameters from here only",
-        )] if props else []
-
-    issues = []
-    seen = set()
-    for i, entry in enumerate(_list(card.get("additionalProperty"))):
-        path = f"additionalProperty/{i}"
-        if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
-            issues.append(Issue("error", path, "entry without a string 'name'"))
-            continue
-        name = entry["name"]
-        seen.add(name)
-        spec = props.get(name)
-        if not isinstance(spec, dict):
-            issues.append(Issue("error", path, f"'{name}' is not declared in episerve:parameters"))
-            continue
-        pairs = [
-            ("valueRequired", entry.get("valueRequired", False), name in required),
-            ("valueType", entry.get("valueType", "integer"), spec.get("type")),
-            ("minValue", entry.get("minValue"), spec.get("minimum")),
-            ("maxValue", entry.get("maxValue"), spec.get("maximum")),
-            ("value", entry.get("value"), spec.get("default")),
-        ]
-        for key, legacy, current in pairs:
-            if legacy != current:
-                issues.append(Issue(
-                    "error", f"{path}/{key}",
-                    f"'{name}': {key} is {legacy!r} here but episerve:parameters says {current!r}",
-                ))
-    for name in sorted(set(props) - seen):
-        issues.append(Issue("error", "additionalProperty", f"'{name}' is declared in episerve:parameters but missing here"))
     return issues
 
 
