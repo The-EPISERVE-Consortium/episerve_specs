@@ -5,7 +5,7 @@ inputs:
     description: Space-separated files to validate
     default: fdo.json
   spec:
-    description: Spec to validate against (default: each file's conformsTo)
+    description: "Spec to validate against (default: each file's conformsTo)"
     default: ""
   strict:
     description: "true: fail on warnings too"

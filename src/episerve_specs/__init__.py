@@ -1,6 +1,6 @@
 """Specifications, JSON Schemas and validators for EPISERVE platform formats."""
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from .registry import available_specs, detect_spec, load_schema, schema_url, validate  # noqa: E402
 from .result import Issue, Result  # noqa: E402
