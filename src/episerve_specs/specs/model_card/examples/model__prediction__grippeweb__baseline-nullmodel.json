@@ -1,0 +1,107 @@
+{
+  "@context": [
+    "https://schema.org/",
+    { "episerve": "https://api.episerve.zib.de/schemas/model-card/v1#" }
+  ],
+  "@type": "SoftwareApplication",
+  "conformsTo": "https://api.episerve.zib.de/schemas/model-card/v1.json",
+  "name": "model__prediction__grippeweb__baseline-nullmodel",
+  "description": "Zero-model (null model) forecast for GrippeWeb disease reports. Predicts the next N weeks by averaging the last M reference weeks per disease. Serves as a baseline for comparison with more complex forecast models.",
+  "url": "ghcr.io/the-episerve-consortium/model__prediction__grippeweb__baseline-nullmodel",
+  "codeRepository": "https://github.com/The-EPISERVE-Consortium/model__prediction__grippeweb__baseline-nullmodel",
+  "applicationCategory": "algorithm",
+  "operatingSystem": "Linux",
+  "runtimePlatform": "Docker",
+  "author": { "@type": "Organization", "name": "EPISERVE Consortium" },
+
+  "episerve:task": {
+    "type": "forecast",
+    "frequency": "weekly",
+    "probabilistic": false,
+    "covariates": false,
+    "parameterRoles": {
+      "horizon": "horizon_weeks",
+      "history": "n_reference_weeks"
+    }
+  },
+
+  "episerve:parameters": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "horizon_weeks": {
+        "type": "integer",
+        "minimum": 1,
+        "default": 4,
+        "unit": "weeks",
+        "description": "Number of weeks to forecast ahead."
+      },
+      "n_reference_weeks": {
+        "type": "integer",
+        "minimum": 1,
+        "default": 4,
+        "unit": "weeks",
+        "description": "Number of past weeks to average as the baseline prediction."
+      }
+    }
+  },
+
+  "episerve:inputs": [
+    {
+      "file": "input.parquet",
+      "format": "application/vnd.apache.parquet",
+      "description": "The GrippeWeb weekly report table. Only the rows for Region 'Bundesweit' and Altersgruppe '15-34' are used.",
+      "columns": [
+        { "name": "Kalenderwoche", "role": "time", "type": "isoWeek", "description": "ISO week, YYYY-Www." },
+        { "name": "Erkrankung", "role": "group", "type": "string", "description": "One forecast per disease." },
+        { "name": "Inzidenz", "role": "target", "type": "number" },
+        { "name": "Region", "role": "filter", "type": "string", "requiredValues": ["Bundesweit"] },
+        { "name": "Altersgruppe", "role": "filter", "type": "string", "requiredValues": ["15-34"] }
+      ]
+    }
+  ],
+
+  "episerve:outputs": [
+    {
+      "file": "predictions.tsv",
+      "format": "text/tab-separated-values",
+      "description": "One row per disease and forecast week.",
+      "columns": [
+        { "name": "Datum", "role": "time", "type": "date", "description": "Monday of the forecast week." },
+        { "name": "Erkrankung", "role": "group", "type": "string" },
+        { "name": "Inzidenz", "role": "mean", "type": "number", "description": "Mean of the last n_reference_weeks weeks." }
+      ]
+    }
+  ],
+
+  "episerve:resources": {
+    "gpu": 0,
+    "network": false
+  },
+
+  "episerve:documentation": {
+    "method": "For each disease, the forecast for every future week is the mean incidence of the last n_reference_weeks weeks.",
+    "intendedUse": "Baseline that other GrippeWeb forecast models should beat.",
+    "limitations": "Fixed to the national series of the 15-34 age group; ignores seasonality and trends.",
+    "trainingData": "None; no fitted parameters."
+  },
+
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "horizon_weeks",
+      "description": "Number of weeks to forecast ahead.",
+      "valueRequired": false,
+      "minValue": 1,
+      "value": 4
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "n_reference_weeks",
+      "description": "Number of past weeks to average as the baseline prediction.",
+      "valueRequired": false,
+      "minValue": 1,
+      "value": 4
+    }
+  ]
+}

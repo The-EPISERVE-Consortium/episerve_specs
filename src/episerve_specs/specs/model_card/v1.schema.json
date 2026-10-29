@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.episerve.zib.de/schemas/model-card/v1.json",
+  "title": "EPISERVE model card, version 1",
+  "description": "Describes a forecast model container: what it is, which config.json parameters it accepts, which input files it reads, which output files it writes and what it needs to run. Stored as fdo.json in the root of the model's repository. Full text: README.md of this spec.",
+  "type": "object",
+  "required": [
+    "@context",
+    "@type",
+    "conformsTo",
+    "name",
+    "description",
+    "url",
+    "codeRepository",
+    "author",
+    "episerve:task",
+    "episerve:parameters",
+    "episerve:inputs",
+    "episerve:outputs"
+  ],
+  "properties": {
+    "@context": {
+      "description": "JSON-LD context; normally [\"https://schema.org/\", {\"episerve\": \"https://api.episerve.zib.de/schemas/model-card/v1#\"}]."
+    },
+    "@type": { "const": "SoftwareApplication" },
+    "conformsTo": {
+      "description": "Names this spec version.",
+      "anyOf": [
+        { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" },
+        {
+          "type": "array",
+          "contains": { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" }
+        }
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The model's name; by convention the repository name, model__<type>__<dataset>__<variant>."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "description": "What the model does, in a few sentences."
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+(/[a-z0-9._-]+)+$",
+      "description": "Container image without a tag, e.g. ghcr.io/the-episerve-consortium/<repo>."
+    },
+    "codeRepository": {
+      "type": "string",
+      "pattern": "^https://",
+      "format": "uri"
+    },
+    "softwareVersion": {
+      "type": "string",
+      "description": "The image tag this card describes, e.g. v0.3.0. Omit on the default branch."
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX identifier (e.g. Apache-2.0) or license URL."
+    },
+    "citation": {
+      "description": "DOI URL(s) of the paper(s) describing the method.",
+      "anyOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "author": {
+      "anyOf": [
+        { "$ref": "#/$defs/agent" },
+        { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/agent" } }
+      ]
+    },
+    "additionalProperty": {
+      "type": "array",
+      "description": "Legacy parameter list (schema.org PropertyValue) still read by the platform; must agree with episerve:parameters."
+    },
+
+    "episerve:task": { "$ref": "#/$defs/task" },
+    "episerve:parameters": { "$ref": "#/$defs/parameters" },
+    "episerve:inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/inputFile" }
+    },
+    "episerve:outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/outputFile" }
+    },
+    "episerve:resources": { "$ref": "#/$defs/resources" },
+    "episerve:documentation": { "$ref": "#/$defs/documentation" }
+  },
+
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "required": ["@type", "name"],
+      "properties": {
+        "@type": { "enum": ["Person", "Organization"] },
+        "name": { "type": "string", "minLength": 1 },
+        "email": { "type": "string" },
+        "affiliation": { "type": "string" },
+        "identifier": { "type": "string", "description": "e.g. an ORCID URL" }
+      }
+    },
+
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "frequency", "probabilistic", "parameterRoles"],
+      "properties": {
+        "type": {
+          "enum": ["forecast"],
+          "description": "What the model does. Version 1 knows only forecast."
+        },
+        "frequency": {
+          "enum": ["daily", "weekly", "monthly", "any"],
+          "description": "Time step of the input series the model expects; any = inferred from the data."
+        },
+        "probabilistic": {
+          "type": "boolean",
+          "description": "True when the outputs include quantiles or samples."
+        },
+        "covariates": {
+          "type": "boolean",
+          "default": false,
+          "description": "True when the model uses input columns with role covariate."
+        },
+        "maxHorizon": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Largest number of steps the model can forecast."
+        },
+        "parameterRoles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["horizon"],
+          "description": "Which parameters (by name) play the standard roles, so the platform can fill them, e.g. from a benchmark.",
+          "properties": {
+            "horizon": { "type": "string", "description": "Number of steps to forecast." },
+            "history": { "type": "string", "description": "Number of past steps the model uses." },
+            "offset": { "type": "string", "description": "Number of most recent steps to leave out (back-testing)." }
+          }
+        }
+      }
+    },
+
+    "parameters": {
+      "description": "JSON Schema of config.json, restricted to flat parameters the platform can show as a form.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "properties"],
+      "properties": {
+        "type": { "const": "object" },
+        "required": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "additionalProperties": {
+          "type": "boolean",
+          "description": "false (recommended): config.json may not contain undeclared keys."
+        },
+        "properties": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "additionalProperties": { "$ref": "#/$defs/parameter" }
+        },
+        "rules": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Rules between parameters or between parameters and the data that the per-parameter declarations cannot express, in words."
+        }
+      }
+    },
+
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "description"],
+      "properties": {
+        "type": { "enum": ["integer", "number", "string", "boolean"] },
+        "title": { "type": "string" },
+        "description": { "type": "string", "minLength": 1 },
+        "default": {},
+        "enum": { "type": "array", "minItems": 1, "uniqueItems": true },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "exclusiveMinimum": { "type": "number" },
+        "exclusiveMaximum": { "type": "number" },
+        "multipleOf": { "type": "number", "exclusiveMinimum": 0 },
+        "minLength": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 0 },
+        "pattern": { "type": "string", "format": "regex" },
+        "examples": { "type": "array" },
+        "unit": {
+          "type": "string",
+          "description": "Unit of the value, e.g. steps, weeks, days."
+        }
+      }
+    },
+
+    "columnType": {
+      "enum": ["date", "datetime", "isoWeek", "integer", "number", "string", "boolean"]
+    },
+    "columnTypes": {
+      "anyOf": [
+        { "$ref": "#/$defs/columnType" },
+        { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/columnType" } }
+      ]
+    },
+    "format": {
+      "enum": ["application/vnd.apache.parquet", "text/tab-separated-values", "text/csv", "application/json"]
+    },
+    "fileName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+
+    "inputFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "format", "columns"],
+      "properties": {
+        "file": { "$ref": "#/$defs/fileName", "description": "Name under /work/input/." },
+        "format": { "$ref": "#/$defs/format" },
+        "description": { "type": "string" },
+        "required": { "type": "boolean", "default": true },
+        "minRows": { "type": "integer", "minimum": 0 },
+        "additionalColumns": {
+          "type": "boolean",
+          "default": true,
+          "description": "false: the file must have exactly the listed columns."
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/inputColumn" }
+        }
+      }
+    },
+    "inputColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "type"],
+      "description": "A column found by name, or by position (0 = first) when the name does not matter.",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "position": { "type": "integer", "minimum": 0 },
+        "role": {
+          "enum": ["time", "target", "group", "covariate", "filter", "other"],
+          "description": "time: the time axis; target: the series to forecast; group: splits the data into separate series; covariate: an extra predictor; filter: the model keeps only some values; other: read but not one of these."
+        },
+        "type": { "$ref": "#/$defs/columnTypes" },
+        "description": { "type": "string" },
+        "nullable": { "type": "boolean", "default": false },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The only values allowed in the column."
+        },
+        "requiredValues": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Values that must occur in the column, e.g. the ones a filter column keeps."
+        }
+      }
+    },
+
+    "outputFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "format", "columns"],
+      "properties": {
+        "file": { "$ref": "#/$defs/fileName", "description": "Name under /work/output/." },
+        "format": { "$ref": "#/$defs/format" },
+        "description": { "type": "string" },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/outputColumn" }
+        }
+      }
+    },
+    "outputColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role"],
+      "description": "A column with a fixed name, or named after an input column (nameFrom).",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "nameFrom": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inputRole"],
+          "properties": {
+            "inputRole": { "enum": ["time", "target", "group", "covariate"] },
+            "suffix": { "type": "string" }
+          }
+        },
+        "role": {
+          "enum": ["time", "group", "mean", "median", "point", "quantile", "sample", "other"],
+          "description": "mean, median, quantile and sample are the Hubverse output types; point = a point forecast whose statistic is not specified."
+        },
+        "level": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Quantile level, only for role quantile, e.g. 0.1."
+        },
+        "type": { "$ref": "#/$defs/columnTypes" },
+        "description": { "type": "string" },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "false: the column is written only in some cases (say which in description)."
+        }
+      }
+    },
+
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "type": "string",
+          "pattern": "^([0-9]+(\\.[0-9]+)?|[0-9]+m)$",
+          "description": "Kubernetes CPU quantity, e.g. 2 or 500m."
+        },
+        "memory": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?(Ki|Mi|Gi|Ti|K|M|G|T)?$",
+          "description": "Kubernetes memory quantity, e.g. 4Gi."
+        },
+        "gpu": { "type": "integer", "minimum": 0 },
+        "network": {
+          "type": "boolean",
+          "description": "True when the container needs internet access at run time (e.g. to download weights)."
+        },
+        "typicalRuntimeSeconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "documentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": { "type": "string", "description": "How the model works." },
+        "intendedUse": { "type": "string" },
+        "limitations": { "type": "string" },
+        "trainingData": { "type": "string", "description": "What the model was trained on, or that it is not trained." },
+        "references": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "URLs of papers, documentation or code."
+        }
+      }
+    }
+  }
+}

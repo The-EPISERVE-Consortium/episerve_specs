@@ -1,0 +1,33 @@
+name: Validate against EPISERVE specs
+description: Validate JSON files (e.g. a model's fdo.json) against EPISERVE specs. Pin the action to a release tag.
+inputs:
+  files:
+    description: Space-separated files to validate
+    default: fdo.json
+  spec:
+    description: Spec to validate against (default: each file's conformsTo)
+    default: ""
+  strict:
+    description: "true: fail on warnings too"
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install episerve-specs
+      shell: bash
+      run: python -m pip install --quiet "${{ github.action_path }}"
+    - name: Validate
+      shell: bash
+      env:
+        FILES: ${{ inputs.files }}
+        SPEC: ${{ inputs.spec }}
+        STRICT: ${{ inputs.strict }}
+      run: |
+        args=()
+        [ -n "$SPEC" ] && args+=(--spec "$SPEC")
+        [ "$STRICT" = "true" ] && args+=(--strict)
+        # shellcheck disable=SC2086  # FILES is a space-separated list on purpose
+        episerve-validate "${args[@]}" $FILES

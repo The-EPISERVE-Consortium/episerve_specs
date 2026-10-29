@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "episerve-specs"
+version = "0.1.0"
+description = "Specifications, JSON Schemas and validators for EPISERVE platform formats"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["jsonschema>=4.18"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+episerve-validate = "episerve_specs.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"episerve_specs" = ["specs/*/*.json", "specs/*/*.md", "specs/*/examples/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
