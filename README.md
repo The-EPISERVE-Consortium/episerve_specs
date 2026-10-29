@@ -62,12 +62,13 @@ all get the same result. The result records which validator produced it.
 |---|---|---|
 | Model repository CI | the action above | available |
 | Sync flow (`workflow-prefect__sync-lakefs-ckan`) | validates each model's card, stores the card sections and the result in CKAN | available |
-| API server | checks a run's config with `check_model_config` | available |
-| API server | `POST /validate/{spec}` for people, the UI and agents; serves the schemas at `/schemas/{spec}/v{N}.json` | planned |
+| API server | checks a run's config with `check_model_config` (`POST /model-runs`, and `POST /models/{model}/check-config` without starting a run) | available |
+| API server | `POST /validate/{spec}` for people, agents and the CLI (`episerve validate`); serves the schemas at `/schemas/{spec}/v{N}.json` and lists them at `/schemas` | available |
+| CKAN | the model page's "Model card" tab shows the card sections and the stored result | available |
 | Writers of other formats | in their tests | planned |
 
-Until the API serves the schemas, the `conformsTo` URLs are identifiers only;
-the schemas themselves are in this repository.
+The `conformsTo` URLs resolve: `https://api.episerve.zib.de/schemas/model-card/v1.json`
+serves the schema from the release the API server pins.
 
 Checks that need platform data (which card belongs to this image, does this
 benchmark's data fit this model) belong to the API, not here.
