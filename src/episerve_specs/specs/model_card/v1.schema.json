@@ -254,6 +254,11 @@
         "type": { "$ref": "#/$defs/columnTypes" },
         "description": { "type": "string" },
         "nullable": { "type": "boolean", "default": false },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "false: the file may lack this column (say what the model does then in description)."
+        },
         "values": {
           "type": "array",
           "minItems": 1,

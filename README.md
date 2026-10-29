@@ -12,7 +12,7 @@ spec text and examples.
 ## Use
 
 ```bash
-pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.2.1"
+pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.3.0"
 
 episerve-validate fdo.json                     # spec from the file's conformsTo
 episerve-validate --spec model-card fdo.json   # name it (e.g. for a card without conformsTo)
@@ -31,7 +31,7 @@ result = validate(card)            # or validate(card, spec="model-card", versio
 result.valid                       # no errors (warnings allowed)
 for issue in result.issues:        # Issue(severity, path, message)
     print(issue)
-result.to_dict()                   # includes "validator": "episerve-specs 0.2.1"
+result.to_dict()                   # includes "validator": "episerve-specs 0.3.0"
 
 from episerve_specs import check_model_config
 check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
@@ -40,14 +40,14 @@ check_model_config(card, config)   # a run's config.json against the card's epis
 As a dependency (no git needed):
 
 ```
-episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.2.1.tar.gz
+episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.3.0.tar.gz
 ```
 
 ### In a model repository's CI
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: The-EPISERVE-Consortium/episerve_specs@v0.2.1
+- uses: The-EPISERVE-Consortium/episerve_specs@v0.3.0
   with:
     files: fdo.json        # default
     strict: "false"        # default

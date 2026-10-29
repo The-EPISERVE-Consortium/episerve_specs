@@ -151,8 +151,14 @@ not matter. Each needs one of the two, a `role` and a `type`:
 
 `type` is one of `date`, `datetime`, `isoWeek` (`YYYY-Www`), `integer`,
 `number`, `string`, `boolean`, or a list of them. Optional: `description`,
-`nullable` (default `false`), `values` (the only values allowed),
-`requiredValues` (values that must occur).
+`nullable` (default `false`), `required` (default `true`; `false` for a column
+the file may lack, e.g. optional covariates), `values` (the only values
+allowed), `requiredValues` (values that must occur).
+
+A model that takes any number of columns of one kind (e.g. "every further
+column is a covariate") lists the first of them by position with
+`required: false`, says so in its `description`, and leaves
+`additionalColumns` at `true`.
 
 ## `episerve:outputs`
 

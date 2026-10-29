@@ -250,3 +250,17 @@ def test_missing_documentation_warns(timesfm):
 def test_malformed_sections_do_not_crash(timesfm, key, bad):
     timesfm[key] = bad
     validate(timesfm)  # reports errors, never raises
+
+
+# ── optional input columns ────────────────────────────────────────────────────
+
+def test_optional_input_column(timesfm):
+    timesfm["episerve:inputs"][0]["columns"].append(
+        {"position": 2, "role": "other", "type": "number", "required": False})
+    timesfm["episerve:inputs"][0]["additionalColumns"] = True
+    assert validate(timesfm).valid
+
+
+def test_input_column_required_must_be_boolean(timesfm):
+    timesfm["episerve:inputs"][0]["columns"][1]["required"] = "no"
+    assert any(i.path == "episerve:inputs/0/columns/1/required" for i in validate(timesfm).errors)
