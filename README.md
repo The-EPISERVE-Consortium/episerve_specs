@@ -31,7 +31,7 @@ result = validate(card)            # or validate(card, spec="model-card", versio
 result.valid                       # no errors (warnings allowed)
 for issue in result.issues:        # Issue(severity, path, message)
     print(issue)
-result.to_dict()                   # includes "validator": "episerve-specs 0.3.0"
+result.to_dict()                   # includes "validator": "episerve-specs 0.4.0"
 
 from episerve_specs import check_model_config
 check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
