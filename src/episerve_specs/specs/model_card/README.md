@@ -32,7 +32,7 @@ wrong (no license, no memory figure, …).
 | `@type` | yes | `SoftwareApplication` |
 | `conformsTo` | yes | the URL above (or a list containing it) |
 | `name` | yes | the repository name, `model__<type>__<dataset>__<variant>` |
-| `description` | yes | what the model does, at least 20 characters |
+| `description` | yes | what the model does, in one sentence: at least 20 characters, at most 200 (a warning above). It is the summary shown in lists and page headers; method, input and output details go in `episerve:documentation`, `episerve:inputs` and `episerve:outputs`. |
 | `url` | yes | the container image **without a tag**, e.g. `ghcr.io/the-episerve-consortium/<repo>` |
 | `codeRepository` | yes | `https://github.com/<owner>/<repo>` |
 | `author` | yes | a `Person` or `Organization` with `name`, or a list of them |

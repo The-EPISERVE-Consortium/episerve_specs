@@ -6,7 +6,7 @@
   "@type": "SoftwareApplication",
   "conformsTo": "https://api.episerve.zib.de/schemas/model-card/v1.json",
   "name": "model__prediction__grippeweb__baseline-nullmodel",
-  "description": "Zero-model (null model) forecast for GrippeWeb disease reports. Predicts the next N weeks by averaging the last M reference weeks per disease. Serves as a baseline for comparison with more complex forecast models.",
+  "description": "Baseline forecast for GrippeWeb: the mean of the last weeks per disease, carried forward for the next weeks.",
   "url": "ghcr.io/the-episerve-consortium/model__prediction__grippeweb__baseline-nullmodel",
   "codeRepository": "https://github.com/The-EPISERVE-Consortium/model__prediction__grippeweb__baseline-nullmodel",
   "applicationCategory": "algorithm",

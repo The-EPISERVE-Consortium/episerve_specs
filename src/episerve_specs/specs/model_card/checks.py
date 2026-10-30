@@ -233,8 +233,18 @@ def _outputs(card: dict) -> list[Issue]:
     return issues
 
 
+DESCRIPTION_MAX = 200
+
+
 def _recommended(card: dict) -> list[Issue]:
     issues = []
+    description = card.get("description")
+    if isinstance(description, str) and len(description) > DESCRIPTION_MAX:
+        issues.append(Issue(
+            "warning", "description",
+            f"{len(description)} characters; keep it to one sentence of at most {DESCRIPTION_MAX} "
+            "(details go in episerve:documentation, episerve:inputs and episerve:outputs)",
+        ))
     if "license" not in card:
         issues.append(Issue("warning", "license", "missing"))
     resources = card.get("episerve:resources")

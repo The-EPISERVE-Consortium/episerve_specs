@@ -41,7 +41,7 @@
     "description": {
       "type": "string",
       "minLength": 20,
-      "description": "What the model does, in a few sentences."
+      "description": "What the model does, in one sentence of at most 200 characters (longer gives a warning). Details go in episerve:documentation, episerve:inputs and episerve:outputs."
     },
     "url": {
       "type": "string",

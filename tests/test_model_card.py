@@ -264,3 +264,10 @@ def test_optional_input_column(timesfm):
 def test_input_column_required_must_be_boolean(timesfm):
     timesfm["episerve:inputs"][0]["columns"][1]["required"] = "no"
     assert any(i.path == "episerve:inputs/0/columns/1/required" for i in validate(timesfm).errors)
+
+
+def test_long_description_warns(timesfm):
+    timesfm["description"] = "x" * 201
+    assert has(validate(timesfm), "description", "201 characters", "warning")
+    timesfm["description"] = "x" * 200
+    assert "description" not in [i.path for i in validate(timesfm).issues]
