@@ -12,26 +12,6 @@ spec text and examples.
 
 ## Use
 
-### Changes in v0.7.1
-
-Model cards accept JSON-LD spec references in `conformsTo`. Run configuration
-validation raises `InvalidParameterSchema` for unusable parameter declarations,
-including unresolved schema references. Parameter schemas resolve references
-within the document and use the standard bundled metaschemas.
-
-### Changes in v0.7.0
-
-The FDO spec stays at draft v1. The release moves structural provenance rules
-into the published JSON Schema, specifies the metadata required for benchmark
-files, validates calendar dates in `kernel.modified`, and accepts JSON-LD object
-references in `conformsTo`. It also includes the fix that limits automatic FDO
-detection to Dataset kernels.
-
-Some records accepted by v0.6.0 can now fail validation. Upgrade consumers
-together so the API, CLI, and writer tests use the same rules.
-
-### Install
-
 ```bash
 pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.7.1"
 
@@ -58,6 +38,9 @@ from episerve_specs import check_model_config
 check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
 ```
 
+`check_model_config` raises `InvalidParameterSchema` if the declared parameter
+schema cannot be used, for example when it contains an unresolved reference.
+
 As a dependency (no git needed):
 
 ```
@@ -76,8 +59,8 @@ episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archi
 
 ## Where validation runs
 
-Every consumer uses this package directly and pins the same release, so they
-all get the same result. The result records which validator produced it.
+Consumers pin a package release. The validation result records the release that
+produced it.
 
 | Where | What | State |
 |---|---|---|
@@ -94,16 +77,18 @@ serves the schema from the release the API server pins.
 Checks that need platform data (which card belongs to this image, does this
 benchmark's data fit this model) belong to the API, not here.
 
-Policy: an invalid card only produces a **warning**: the sync flow stores the
-result in CKAN, and the model is still registered and runs.
+The sync flow registers a model even if its card is invalid and stores the
+validation result in CKAN. The API rejects a run request if the model's declared
+parameter schema cannot validate its configuration.
 
 ## Versions
 
 - Each spec version has a fixed schema URL,
   `https://api.episerve.zib.de/schemas/<spec>/v<N>.json`, named in the
-  document's `conformsTo`. A released version is only extended compatibly; a
-  breaking change is a new version next to it.
-- Package releases (`v0.1.0`, …) add specs, spec versions and helpers.
+  document's `conformsTo`. A breaking change to a stable spec requires a new
+  version. An internal draft can tighten its rules after checking known
+  platform records and downstream tests.
+- Package versions track releases of the validator, schemas, and helpers.
 
 ## Adding a spec
 
