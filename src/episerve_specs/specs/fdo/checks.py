@@ -7,10 +7,15 @@ reported separately, so a check only reports what it can see and skips values of
 from __future__ import annotations
 
 import re
+from datetime import datetime
 
 from ...result import Issue
 
 _QID = re.compile(r"Q[0-9]+")
+_TIMESTAMP = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
+    r"(?:Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])"
+)
 
 
 def _dict(value) -> dict:
@@ -22,8 +27,12 @@ def _list(value) -> list:
 
 
 def detect(document) -> str | None:
-    """Version 1 for a document that looks like an FDO but does not name its spec."""
-    if isinstance(document, dict) and document.get("@type") == "DigitalObject" and isinstance(document.get("kernel"), dict):
+    """Version 1 for a DigitalObject with the Dataset kernel type."""
+    if (
+        isinstance(document, dict)
+        and document.get("@type") == "DigitalObject"
+        and _dict(document.get("kernel")).get("digitalObjectType") == "https://schema.org/Dataset"
+    ):
         return "1"
     return None
 
@@ -40,8 +49,9 @@ def kind_of(fdo: dict) -> str:
 
 def check_v1(fdo: dict) -> list[Issue]:
     issues: list[Issue] = []
+    kind = kind_of(fdo)
     for check in (_identity, _components, _profile, _provenance):
-        issues += check(fdo, kind_of(fdo))
+        issues += check(fdo, kind)
     return issues
 
 
@@ -88,7 +98,23 @@ def _profile(fdo: dict, kind: str) -> list[Issue]:
             issues.append(Issue("warning", "profile/distribution", "missing; the download location is not recorded"))
     if kind == "run" and not profile.get("url"):
         issues.append(Issue("warning", "profile/url", "missing; the model image is not recorded"))
+    if kind == "benchmark" and isinstance(fdo.get("profile"), dict):
+        for key in ("episerveBenchmark", "accessRights"):
+            if key not in profile:
+                issues.append(Issue("error", f"profile/{key}", "required for a benchmark"))
     return issues
+
+
+def _is_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not _TIMESTAMP.fullmatch(value):
+        return False
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
 
 
 def _provenance(fdo: dict, kind: str) -> list[Issue]:
@@ -102,22 +128,32 @@ def _provenance(fdo: dict, kind: str) -> list[Issue]:
             if key not in prov:
                 issues.append(Issue("error", f"provenance/{key}", f"required for a {kind} object"))
 
-    if kind in ("raw", "processed"):
+    if kind != "run":
         need("prov:generatedAtTime", "prov:wasAttributedTo")
     if kind in ("processed", "benchmark"):
         need("prov:wasDerivedFrom")
-        issues += _derived_from(prov.get("prov:wasDerivedFrom"), kind)
-    if kind == "benchmark":
-        need("prov:generatedAtTime", "prov:wasAttributedTo")
+        if "prov:wasDerivedFrom" in prov:
+            issues += _derived_from(prov["prov:wasDerivedFrom"], kind)
+
+    timestamps = ("prov:startedAtTime", "prov:endedAtTime") if kind == "run" else ("prov:generatedAtTime",)
+    for key in timestamps:
+        if key in prov and not _is_timestamp(prov[key]):
+            issues.append(Issue("error", f"provenance/{key}", "must be a timestamp with a timezone"))
+
     if kind == "run":
         need("@id", "@type", "prov:startedAtTime", "prov:endedAtTime", "prov:used", "prov:wasAssociatedWith")
+        if "@type" in prov and prov["@type"] != "prov:Activity":
+            issues.append(Issue("error", "provenance/@type", "must be prov:Activity"))
         activity = _dict(fdo.get("prov:wasGeneratedBy")).get("@id")
         if isinstance(activity, str) and isinstance(prov.get("@id"), str) and activity != prov["@id"]:
             issues.append(Issue("error", "prov:wasGeneratedBy", f"names {activity!r}, but the provenance block is {prov['@id']!r}"))
         if "prov:wasGeneratedBy" not in fdo:
             issues.append(Issue("error", "prov:wasGeneratedBy", "required for a model run"))
-        for index, used in enumerate(_list(prov.get("prov:used"))):
-            if not isinstance(used, dict) or not isinstance(used.get("@id"), str):
+        used = prov.get("prov:used")
+        if "prov:used" in prov and not isinstance(used, list):
+            issues.append(Issue("error", "provenance/prov:used", "must be an array"))
+        for index, item in enumerate(_list(used)):
+            if not isinstance(item, dict) or not isinstance(item.get("@id"), str):
                 issues.append(Issue("error", f"provenance/prov:used/{index}", "must be an object with an @id"))
         agent = _dict(prov.get("prov:wasAssociatedWith"))
         if "prov:wasAssociatedWith" in prov and not isinstance(agent.get("@id"), str):
@@ -128,6 +164,8 @@ def _provenance(fdo: dict, kind: str) -> list[Issue]:
 def _derived_from(value, kind: str) -> list[Issue]:
     """``prov:wasDerivedFrom``: one entry or a list. An entry is ``{"@id": <QID>, ...}``; a benchmark's list may
     also hold bare QIDs (older benchmarks)."""
+    if kind == "processed" and value == []:
+        return [Issue("error", "provenance/prov:wasDerivedFrom", "must name at least one source object")]
     issues = []
     entries = value if isinstance(value, list) else [value]
     for index, entry in enumerate(entries):
