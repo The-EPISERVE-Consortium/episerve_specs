@@ -1,0 +1,68 @@
+{
+  "@context": [
+    "https://w3id.org/fdo/context/v1",
+    {
+      "schema": "https://schema.org/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "fdo": "https://w3id.org/fdo/vocabulary/"
+    }
+  ],
+  "@id": "Q1788370037691",
+  "@type": "DigitalObject",
+  "prov:wasGeneratedBy": {
+    "@id": "#run"
+  },
+  "kernel": {
+    "@id": "Q1788370037691",
+    "digitalObjectType": "https://schema.org/Dataset",
+    "primaryIdentifier": "Q1788370037691",
+    "kernelVersion": "v1",
+    "immutable": false,
+    "modified": "2026-09-02T17:29:48Z",
+    "fdo:hasComponent": [
+      {
+        "@id": "components/input/config.json",
+        "componentId": "config.json",
+        "mediaType": "application/json"
+      },
+      {
+        "@id": "components/input/config_prefect.json",
+        "componentId": "config_prefect.json",
+        "mediaType": "application/json"
+      },
+      {
+        "@id": "components/ro-crate-metadata.json",
+        "componentId": "ro-crate-metadata.json",
+        "mediaType": "application/json"
+      }
+    ]
+  },
+  "profile": {
+    "@context": "https://schema.org/",
+    "@type": "Dataset",
+    "@id": "Q1788370037691",
+    "name": "model__prediction__generic__timesfm",
+    "description": "Model run of model__prediction__generic__timesfm (tag: latest)",
+    "url": "ghcr.io/the-episerve-consortium/model__prediction__generic__timesfm"
+  },
+  "provenance": {
+    "@id": "#run",
+    "@type": "prov:Activity",
+    "prov:startedAtTime": "2026-09-02T17:27:17Z",
+    "prov:endedAtTime": "2026-09-02T17:29:48Z",
+    "prov:wasAssociatedWith": {
+      "@id": "ghcr.io/the-episerve-consortium/model__prediction__generic__timesfm:latest",
+      "@type": "prov:SoftwareAgent",
+      "schema:name": "model__prediction__generic__timesfm",
+      "schema:softwareVersion": "latest",
+      "schema:url": "ghcr.io/the-episerve-consortium/model__prediction__generic__timesfm"
+    },
+    "prov:used": [
+      {
+        "@id": "https://doip.episerve.zib.de/doip/retrieve/Q5026620385284/COVID-19-Faelle_7-Tage-Inzidenz_Deutschland.parquet?version=829d9807d6d76c0ceaf875cdd40b363fa0863d14619e10c81c5247d512888802",
+        "@type": "prov:Entity",
+        "schema:query": "SELECT \"Meldedatum\", \"Inzidenz_7-Tage\" FROM df WHERE \"Altersgruppe\" = '05-14' AND \"Meldedatum\" <= '2025-11-30' ORDER BY \"Meldedatum\""
+      }
+    ]
+  }
+}

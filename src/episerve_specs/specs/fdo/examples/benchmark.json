@@ -1,0 +1,89 @@
+{
+  "@context": [
+    "https://w3id.org/fdo/context/v1",
+    {
+      "schema": "https://schema.org/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "fdo": "https://w3id.org/fdo/vocabulary/"
+    }
+  ],
+  "@id": "Q1792271371429",
+  "@type": "DigitalObject",
+  "kernel": {
+    "@id": "Q1792271371429",
+    "digitalObjectType": "https://schema.org/Dataset",
+    "primaryIdentifier": "Q1792271371429",
+    "kernelVersion": "v1",
+    "immutable": true,
+    "modified": "2026-11-11T11:14:36Z",
+    "fdo:hasComponent": [
+      {
+        "@id": "#input.parquet",
+        "componentId": "input.parquet",
+        "mediaType": "application/vnd.apache.parquet"
+      },
+      {
+        "@id": "#reference.parquet",
+        "componentId": "reference.parquet",
+        "mediaType": "application/vnd.apache.parquet"
+      },
+      {
+        "@id": "#benchmark-definition.json",
+        "componentId": "benchmark-definition.json",
+        "mediaType": "application/json"
+      }
+    ]
+  },
+  "profile": {
+    "@context": "https://schema.org/",
+    "@type": "Dataset",
+    "@id": "Q1792271371429",
+    "name": "benchmark-1",
+    "display_name": "Benchmark 1: AMELAG SARS-CoV-2, 8 Wochen",
+    "description": "AMELAG SARS-CoV-2, 8 Wochen. Generated model input (history window, target series and covariates) and reference data (the test window the forecasts are scored against).",
+    "url": "",
+    "additionalType": "benchmarks",
+    "accessRights": "open",
+    "episerveBenchmark": {
+      "id": 1,
+      "files": {
+        "input": {
+          "component": "input.parquet",
+          "sha256": "ed4d97915559546ffb36f73e8b6ad410e3d82d2d3ec0e4d8e6d353465bcb1aac",
+          "rows": 233,
+          "columns": [
+            "datum",
+            "viruslast_normalisiert"
+          ],
+          "first_date": "2022-03-02",
+          "last_date": "2026-08-12"
+        },
+        "reference": {
+          "component": "reference.parquet",
+          "sha256": "094059285c4519bf018f314bf4924cd7344d2d368c065d7fc71b60aabf243d06",
+          "rows": 8,
+          "columns": [
+            "datum",
+            "viruslast_normalisiert"
+          ]
+        },
+        "definition": {
+          "component": "benchmark-definition.json",
+          "media_type": "application/json",
+          "sha256": "2d8e2a060b354116c7c2ff75f842ba0ab0741e3c6d1fe33d9f05184f85b5f482"
+        }
+      },
+      "source_qids": [
+        "Q9493814122238"
+      ],
+      "data_commit": "95e3aa463de8fa9d4b800f750a79cfef3bf5e7e8e7716d07d0ebd19c826a88f8"
+    }
+  },
+  "provenance": {
+    "prov:generatedAtTime": "2026-10-17T21:09:31Z",
+    "prov:wasAttributedTo": "EPISERVE benchmark designer",
+    "prov:wasDerivedFrom": [
+      "Q9493814122238"
+    ]
+  }
+}

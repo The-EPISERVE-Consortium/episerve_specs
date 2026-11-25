@@ -76,6 +76,11 @@ def detect_spec(document: object) -> tuple[str, str] | None:
             match = _CONFORMS_TO.match(url.strip())
             if match and match.group(1) in _spec_modules():
                 return match.group(1), match.group(2)
+    for spec, module in sorted(_spec_modules().items()):
+        detect = getattr(module, "DETECT", None)  # a spec whose documents are recognised without conformsTo
+        version = detect(document) if detect else None
+        if version:
+            return spec, version
     return None
 
 

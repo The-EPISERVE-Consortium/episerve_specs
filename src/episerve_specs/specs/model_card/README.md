@@ -1,5 +1,7 @@
 # Model card, version 1
 
+**Since** package 0.1.0 · **Status:** stable. A released version is only extended compatibly; a breaking change is a new version.
+
 A model card describes a forecast model container: what it is, which
 parameters it accepts in `config.json`, which files it reads from
 `/work/input/`, which files it writes to `/work/output/`, and what it needs

@@ -1,0 +1,50 @@
+{
+  "@context": [
+    "https://w3id.org/fdo/context/v1",
+    {
+      "schema": "https://schema.org/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "fdo": "https://w3id.org/fdo/vocabulary/"
+    }
+  ],
+  "@id": "Q3274128860531-raw",
+  "@type": "DigitalObject",
+  "kernel": {
+    "@id": "Q3274128860531-raw",
+    "digitalObjectType": "https://schema.org/Dataset",
+    "primaryIdentifier": "Q3274128860531-raw",
+    "kernelVersion": "v1",
+    "immutable": false,
+    "modified": "2026-11-21T00:00:10Z",
+    "fdo:hasComponent": [
+      {
+        "@id": "#RKI__grippeweb.tsv",
+        "componentId": "RKI__grippeweb.tsv",
+        "mediaType": "text/tab-separated-values"
+      }
+    ]
+  },
+  "profile": {
+    "@context": "https://schema.org/",
+    "@type": "Dataset",
+    "@id": "Q3274128860531-raw",
+    "name": "grippeweb",
+    "display_name": "GrippeWeb Weekly Report Data",
+    "description": "Weekly GrippeWeb participant reports and estimated incidence for acute respiratory illness in Germany. The dataset is stratified by season, illness type, age group, region, and calendar week.",
+    "url": "https://raw.githubusercontent.com/robert-koch-institut/GrippeWeb_Daten_des_Wochenberichts/refs/heads/main/GrippeWeb_Daten_des_Wochenberichts.tsv",
+    "additionalType": "incidence",
+    "distribution": [
+      {
+        "@type": "DataDownload",
+        "contentUrl": "https://raw.githubusercontent.com/robert-koch-institut/GrippeWeb_Daten_des_Wochenberichts/refs/heads/main/GrippeWeb_Daten_des_Wochenberichts.tsv"
+      }
+    ],
+    "license": "cc-by",
+    "creditText": "Robert Koch-Institut (RKI), GrippeWeb Weekly Report Data, licensed under CC BY 4.0."
+  },
+  "provenance": {
+    "prov:generatedAtTime": "2026-11-21T00:00:10Z",
+    "prov:wasAttributedTo": "EPISERVE Consortium dataset downloader",
+    "source_changed_at": "2026-11-20T00:00:26Z"
+  }
+}

@@ -8,11 +8,12 @@ spec text and examples.
 | Spec | Versions | What it describes |
 |---|---|---|
 | [`model-card`](src/episerve_specs/specs/model_card/README.md) | v1 | a forecast model container (`fdo.json` in the model's repository) |
+| [`fdo`](src/episerve_specs/specs/fdo/README.md) | v1 | the metadata record (`<QID>.fdo.json`) of a raw or processed dataset, a model run or a benchmark |
 
 ## Use
 
 ```bash
-pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.5.0"
+pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.6.0"
 
 episerve-validate fdo.json                     # spec from the file's conformsTo
 episerve-validate --spec model-card fdo.json   # name it (e.g. for a card without conformsTo)
@@ -31,7 +32,7 @@ result = validate(card)            # or validate(card, spec="model-card", versio
 result.valid                       # no errors (warnings allowed)
 for issue in result.issues:        # Issue(severity, path, message)
     print(issue)
-result.to_dict()                   # includes "validator": "episerve-specs 0.5.0"
+result.to_dict()                   # includes "validator": "episerve-specs 0.6.0"
 
 from episerve_specs import check_model_config
 check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
@@ -40,14 +41,14 @@ check_model_config(card, config)   # a run's config.json against the card's epis
 As a dependency (no git needed):
 
 ```
-episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.5.0.tar.gz
+episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.6.0.tar.gz
 ```
 
 ### In a model repository's CI
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: The-EPISERVE-Consortium/episerve_specs@v0.5.0
+- uses: The-EPISERVE-Consortium/episerve_specs@v0.6.0
   with:
     files: fdo.json        # default
     strict: "false"        # default
@@ -65,7 +66,7 @@ all get the same result. The result records which validator produced it.
 | API server | checks a run's config with `check_model_config` (`POST /model-runs`, and `POST /models/{model}/check-config` without starting a run) | available |
 | API server | `POST /validate/{spec}` for people, agents and the CLI (`episerve validate`); serves the schemas at `/schemas/{spec}/v{N}.json` and lists them at `/schemas` | available |
 | CKAN | the model page's "Model card" tab shows the card sections and the stored result | available |
-| Writers of other formats | in their tests | planned |
+| Writers of FDOs (dataset downloader, model runner, benchmark designer) | in their tests, against the `fdo` spec | planned |
 
 The `conformsTo` URLs resolve: `https://api.episerve.zib.de/schemas/model-card/v1.json`
 serves the schema from the release the API server pins.
