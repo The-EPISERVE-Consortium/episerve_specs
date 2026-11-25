@@ -17,8 +17,8 @@
     "conformsTo": {
       "description": "Names this spec version. Optional: detection uses the DigitalObject @type and Dataset kernel type.",
       "anyOf": [
-        { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" },
-        { "type": "array", "contains": { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" } }
+        { "$ref": "#/$defs/specReference" },
+        { "type": "array", "contains": { "$ref": "#/$defs/specReference" } }
       ]
     },
     "kernel": { "$ref": "#/$defs/kernel" },
@@ -32,8 +32,117 @@
     }
   },
 
+  "if": {
+    "anyOf": [
+      { "required": ["prov:wasGeneratedBy"] },
+      {
+        "properties": {
+          "provenance": {
+            "type": "object",
+            "required": ["@type"],
+            "properties": { "@type": { "const": "prov:Activity" } }
+          }
+        },
+        "required": ["provenance"]
+      }
+    ]
+  },
+  "then": {
+    "required": ["prov:wasGeneratedBy"],
+    "properties": { "provenance": { "$ref": "#/$defs/runProvenance" } }
+  },
+  "else": {
+    "properties": { "provenance": { "$ref": "#/$defs/generationProvenance" } },
+    "if": {
+      "required": ["profile"],
+      "properties": {
+        "profile": {
+          "type": "object",
+          "anyOf": [
+            { "required": ["episerveBenchmark"] },
+            { "required": ["additionalType"], "properties": { "additionalType": { "const": "benchmarks" } } }
+          ]
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "profile": { "required": ["episerveBenchmark", "accessRights"] },
+        "provenance": {
+          "required": ["prov:wasDerivedFrom"],
+          "properties": {
+            "prov:wasDerivedFrom": {
+              "anyOf": [
+                { "$ref": "#/$defs/benchmarkSource" },
+                { "type": "array", "items": { "$ref": "#/$defs/benchmarkSource" } }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "else": {
+      "if": { "required": ["@id"], "properties": { "@id": { "type": "string", "pattern": "-raw$" } } },
+      "else": {
+        "properties": {
+          "provenance": {
+            "required": ["prov:wasDerivedFrom"],
+            "properties": {
+              "prov:wasDerivedFrom": {
+                "anyOf": [
+                  { "$ref": "#/$defs/datasetSource" },
+                  { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/datasetSource" } }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
   "$defs": {
+    "specReference": {
+      "anyOf": [
+        { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" },
+        {
+          "type": "object",
+          "required": ["@id"],
+          "properties": { "@id": { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" } }
+        }
+      ]
+    },
     "qid": { "type": "string", "pattern": "^Q[0-9]+(-raw)?$" },
+
+    "identifiedObject": {
+      "type": "object",
+      "required": ["@id"],
+      "properties": { "@id": { "type": "string", "minLength": 1 } }
+    },
+    "datasetSource": {
+      "type": "object",
+      "required": ["@id"],
+      "properties": { "@id": { "$ref": "#/$defs/qid" } }
+    },
+    "benchmarkSource": {
+      "description": "Older benchmarks can name source objects by bare QID.",
+      "anyOf": [{ "$ref": "#/$defs/qid" }, { "$ref": "#/$defs/datasetSource" }]
+    },
+    "generationProvenance": {
+      "required": ["prov:generatedAtTime", "prov:wasAttributedTo"],
+      "properties": { "prov:generatedAtTime": { "$ref": "#/$defs/dateTime" } }
+    },
+    "runProvenance": {
+      "required": ["@id", "@type", "prov:startedAtTime", "prov:endedAtTime", "prov:used", "prov:wasAssociatedWith"],
+      "properties": {
+        "@id": { "type": "string", "minLength": 1 },
+        "@type": { "const": "prov:Activity" },
+        "prov:startedAtTime": { "$ref": "#/$defs/dateTime" },
+        "prov:endedAtTime": { "$ref": "#/$defs/dateTime" },
+        "prov:used": { "type": "array", "items": { "$ref": "#/$defs/identifiedObject" } },
+        "prov:wasAssociatedWith": { "$ref": "#/$defs/identifiedObject" }
+      }
+    },
 
     "kernel": {
       "type": "object",
@@ -97,10 +206,49 @@
             }
           }
         },
-        "episerveBenchmark": { "type": "object", "description": "Benchmarks only: the pinned input and reference files." }
+        "episerveBenchmark": { "$ref": "#/$defs/benchmark" }
       }
     },
 
-    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" }
+    "benchmark": {
+      "type": "object",
+      "description": "The benchmark's identity, source commit and pinned files.",
+      "required": ["id", "data_commit", "files"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "data_commit": { "type": "string", "minLength": 1 },
+        "files": {
+          "type": "object",
+          "required": ["input", "reference"],
+          "properties": {
+            "input": { "$ref": "#/$defs/benchmarkDataFile" },
+            "reference": { "$ref": "#/$defs/benchmarkDataFile" },
+            "definition": { "$ref": "#/$defs/benchmarkFile" }
+          }
+        }
+      }
+    },
+    "benchmarkFile": {
+      "type": "object",
+      "required": ["component", "sha256"],
+      "properties": {
+        "component": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9A-Fa-f]{64}$" },
+        "media_type": { "type": "string" }
+      }
+    },
+    "benchmarkDataFile": {
+      "$ref": "#/$defs/benchmarkFile",
+      "required": ["rows", "columns"],
+      "properties": {
+        "rows": { "type": "integer", "minimum": 0 },
+        "columns": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "dateTime": { "type": "string", "format": "date-time" },
+    "timestamp": {
+      "$ref": "#/$defs/dateTime",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    }
   }
 }
