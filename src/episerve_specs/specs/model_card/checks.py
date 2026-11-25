@@ -12,14 +12,11 @@ from jsonschema.exceptions import SchemaError
 
 from ...result import Issue
 
-KNOWN_KEYS = {
-    "episerve:task",
-    "episerve:parameters",
-    "episerve:inputs",
-    "episerve:outputs",
-    "episerve:resources",
-    "episerve:documentation",
-}
+# The sections of the model card, without the "episerve:" prefix. The single list every
+# consumer uses (sync flow, API server, CKAN theme); a new section is added here and in
+# v1.schema.json, and tests/test_model_card.py checks that the two agree.
+SECTIONS = ("task", "parameters", "inputs", "outputs", "resources", "documentation")
+KNOWN_KEYS = {f"episerve:{section}" for section in SECTIONS}
 
 
 def _list(value) -> list:

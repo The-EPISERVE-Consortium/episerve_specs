@@ -271,3 +271,14 @@ def test_long_description_warns(timesfm):
     assert has(validate(timesfm), "description", "201 characters", "warning")
     timesfm["description"] = "x" * 200
     assert "description" not in [i.path for i in validate(timesfm).issues]
+
+
+# ── the list of sections ──────────────────────────────────────────────────────
+
+def test_sections_agree_with_schema_and_known_keys():
+    from episerve_specs import MODEL_CARD_SECTIONS, load_schema
+    from episerve_specs.specs.model_card.checks import KNOWN_KEYS
+
+    in_schema = {k.removeprefix("episerve:") for k in load_schema("model-card", "1")["properties"] if k.startswith("episerve:")}
+    assert in_schema == set(MODEL_CARD_SECTIONS)
+    assert KNOWN_KEYS == {f"episerve:{s}" for s in MODEL_CARD_SECTIONS}
