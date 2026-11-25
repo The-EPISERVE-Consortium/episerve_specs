@@ -1,15 +1,15 @@
 # FDO, version 1
 
-**Since** package 0.6.0 · **Status:** draft. It describes what is stored today, and every existing record is valid. The writers (dataset downloader, model runner, API server) check their output against it in their tests; it has not yet been compared with the FDO Forum's profiles. Until then stricter checks may be added, but only as warnings, so a record that is valid stays valid.
+**Since** package 0.6.0 · **Status:** draft. The dataset downloader, model runner, and API server test the records they write against this spec.
 
 The metadata record (`<QID>.fdo.json`) of an object on the EPISERVE platform: a
 **raw dataset**, a **processed dataset**, a **model run** or a **benchmark**. The
 platform's writers (dataset downloader, model runner, benchmark designer) create
 it; the sync flow, the DOIP server, the lineage view and the catalog read it.
-This spec describes what is stored today, so every existing record is valid.
 
-Schema: `https://api.episerve.zib.de/schemas/fdo/v1.json`. Documents may name it in
-`conformsTo`; one that does not is recognised by `@type: DigitalObject` and its `kernel`.
+The schema is at `https://api.episerve.zib.de/schemas/fdo/v1.json`. Documents may name it in
+`conformsTo`. Automatic detection checks for `@type: DigitalObject` and a
+`kernel.digitalObjectType` of `https://schema.org/Dataset`.
 
 ## Envelope (all kinds)
 

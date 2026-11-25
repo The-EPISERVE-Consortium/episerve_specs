@@ -15,7 +15,7 @@
     "@id": { "$ref": "#/$defs/qid", "description": "The object's QID; a raw dataset's carries the suffix -raw." },
     "@type": { "const": "DigitalObject" },
     "conformsTo": {
-      "description": "Names this spec version. Optional: a document without it is recognised by its @type and kernel.",
+      "description": "Names this spec version. Optional: detection uses the DigitalObject @type and Dataset kernel type.",
       "anyOf": [
         { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" },
         { "type": "array", "contains": { "const": "https://api.episerve.zib.de/schemas/fdo/v1.json" } }

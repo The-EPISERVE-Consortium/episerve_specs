@@ -4,7 +4,7 @@ from importlib import resources
 
 import pytest
 
-from episerve_specs import validate
+from episerve_specs import detect_spec, validate
 from episerve_specs.specs.fdo.checks import kind_of
 
 EXAMPLES = resources.files("episerve_specs.specs.fdo").joinpath("examples")
@@ -66,6 +66,12 @@ def test_a_model_card_is_not_taken_for_an_fdo():
     assert validate(load("raw-dataset.json") | {"@type": "SoftwareApplication"}).spec is None
 
 
+def test_a_model_fdo_without_conforms_to_is_not_auto_detected(raw):
+    raw["kernel"]["digitalObjectType"] = "https://schema.org/SoftwareApplication"
+    raw["profile"]["@type"] = "SoftwareApplication"
+    assert detect_spec(raw) is None
+
+
 # ── envelope ──────────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("key", ["@context", "@id", "kernel", "profile", "provenance"])
@@ -81,7 +87,7 @@ def test_identifiers_must_agree(raw):
 
 def test_digital_object_type_is_dataset(raw):
     raw["kernel"]["digitalObjectType"] = "https://schema.org/SoftwareApplication"
-    assert not validate(raw).valid
+    assert any(i.path == "kernel/digitalObjectType" for i in validate(raw, spec="fdo").errors)
 
 
 def test_qid_form(raw):
@@ -140,6 +146,11 @@ def test_a_dataset_needs_generation_provenance(raw):
     assert has(validate(raw), "provenance/prov:generatedAtTime", "required for a raw object")
 
 
+def test_generation_time_must_be_a_timestamp(raw):
+    raw["provenance"]["prov:generatedAtTime"] = None
+    assert has(validate(raw), "provenance/prov:generatedAtTime", "must be a timestamp")
+
+
 def test_a_processed_dataset_names_its_raw_source(processed):
     del processed["provenance"]["prov:wasDerivedFrom"]
     assert has(validate(processed), "provenance/prov:wasDerivedFrom", "required for a processed object")
@@ -158,6 +169,11 @@ def test_was_derived_from_must_name_a_qid(processed):
     assert not validate(processed).valid
 
 
+def test_a_processed_dataset_needs_at_least_one_source(processed):
+    processed["provenance"]["prov:wasDerivedFrom"] = []
+    assert has(validate(processed), "provenance/prov:wasDerivedFrom", "at least one source")
+
+
 def test_a_run_needs_its_activity(run):
     del run["provenance"]["prov:endedAtTime"]
     del run["prov:wasGeneratedBy"]
@@ -174,6 +190,29 @@ def test_the_run_activity_must_match_the_provenance_block(run):
 def test_every_input_of_a_run_has_an_id(run):
     run["provenance"]["prov:used"].append({"@type": "prov:Entity"})
     assert any("prov:used/" in i.path for i in validate(run).errors)
+
+
+@pytest.mark.parametrize(("key", "value", "message"), [
+    ("@type", "wrong", "must be prov:Activity"),
+    ("prov:used", None, "must be an array"),
+    ("prov:startedAtTime", "2026-02-30T00:00:00Z", "must be a timestamp"),
+    ("prov:endedAtTime", "2026-11-25T14:45:00", "must be a timestamp"),
+])
+def test_run_provenance_values_must_match_their_expected_types(run, key, value, message):
+    run["provenance"][key] = value
+    assert has(validate(run), f"provenance/{key}", message)
+
+
+def test_a_run_can_have_no_inputs_and_use_a_timestamp_with_an_offset(run):
+    run["provenance"]["prov:used"] = []
+    run["provenance"]["prov:startedAtTime"] = "2026-09-02T19:27:17.125+02:00"
+    assert validate(run).valid
+
+
+@pytest.mark.parametrize("key", ["episerveBenchmark", "accessRights"])
+def test_a_benchmark_requires_its_profile_fields(benchmark, key):
+    del benchmark["profile"][key]
+    assert has(validate(benchmark), f"profile/{key}", "required for a benchmark")
 
 
 def test_a_benchmark_lists_its_sources_by_qid(benchmark):
