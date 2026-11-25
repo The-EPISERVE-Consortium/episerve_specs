@@ -3,8 +3,9 @@ import json
 from importlib import resources
 
 import pytest
+from jsonschema import Draft202012Validator, FormatChecker
 
-from episerve_specs import detect_spec, validate
+from episerve_specs import detect_spec, load_schema, schema_url, validate
 from episerve_specs.specs.fdo.checks import kind_of
 
 EXAMPLES = resources.files("episerve_specs.specs.fdo").joinpath("examples")
@@ -56,8 +57,12 @@ def test_there_is_an_example_of_every_kind():
     assert {n: kind_of(load(n)) for n in NAMES} == KINDS
 
 
-def test_conforms_to_names_the_spec():
-    doc = load("raw-dataset.json") | {"conformsTo": "https://api.episerve.zib.de/schemas/fdo/v1.json"}
+@pytest.mark.parametrize("as_object", [False, True])
+@pytest.mark.parametrize("as_list", [False, True])
+def test_conforms_to_names_the_spec(as_object, as_list):
+    url = schema_url("fdo", "1")
+    reference = {"@id": url} if as_object else url
+    doc = load("raw-dataset.json") | {"conformsTo": [reference] if as_list else reference}
     result = validate(doc)
     assert result.valid and result.spec == "fdo"
 
@@ -143,17 +148,24 @@ def test_a_dataset_without_license_url_distribution_warns(raw):
 
 def test_a_dataset_needs_generation_provenance(raw):
     del raw["provenance"]["prov:generatedAtTime"]
-    assert has(validate(raw), "provenance/prov:generatedAtTime", "required for a raw object")
+    assert has(validate(raw), "provenance", "'prov:generatedAtTime' is a required property")
 
 
 def test_generation_time_must_be_a_timestamp(raw):
     raw["provenance"]["prov:generatedAtTime"] = None
-    assert has(validate(raw), "provenance/prov:generatedAtTime", "must be a timestamp")
+    assert has(validate(raw), "provenance/prov:generatedAtTime", "is not of type")
+
+
+def test_published_schema_rejects_an_impossible_kernel_date(raw):
+    raw["kernel"]["modified"] = "2026-02-30T00:00:00Z"
+    validator = Draft202012Validator(load_schema("fdo", "1"), format_checker=FormatChecker())
+    assert not validator.is_valid(raw)
+    assert has(validate(raw), "kernel/modified", "is not a 'date-time'")
 
 
 def test_a_processed_dataset_names_its_raw_source(processed):
     del processed["provenance"]["prov:wasDerivedFrom"]
-    assert has(validate(processed), "provenance/prov:wasDerivedFrom", "required for a processed object")
+    assert has(validate(processed), "provenance", "'prov:wasDerivedFrom' is a required property")
 
 
 @pytest.mark.parametrize("shape", ["object", "list"])
@@ -171,15 +183,15 @@ def test_was_derived_from_must_name_a_qid(processed):
 
 def test_a_processed_dataset_needs_at_least_one_source(processed):
     processed["provenance"]["prov:wasDerivedFrom"] = []
-    assert has(validate(processed), "provenance/prov:wasDerivedFrom", "at least one source")
+    assert has(validate(processed), "provenance/prov:wasDerivedFrom", "is not valid")
 
 
 def test_a_run_needs_its_activity(run):
     del run["provenance"]["prov:endedAtTime"]
     del run["prov:wasGeneratedBy"]
     result = validate(run)
-    assert has(result, "provenance/prov:endedAtTime", "required for a run object")
-    assert has(result, "prov:wasGeneratedBy", "required for a model run")
+    assert has(result, "provenance", "'prov:endedAtTime' is a required property")
+    assert has(result, "", "'prov:wasGeneratedBy' is a required property")
 
 
 def test_the_run_activity_must_match_the_provenance_block(run):
@@ -193,13 +205,15 @@ def test_every_input_of_a_run_has_an_id(run):
 
 
 @pytest.mark.parametrize(("key", "value", "message"), [
-    ("@type", "wrong", "must be prov:Activity"),
-    ("prov:used", None, "must be an array"),
-    ("prov:startedAtTime", "2026-02-30T00:00:00Z", "must be a timestamp"),
-    ("prov:endedAtTime", "2026-11-25T14:45:00", "must be a timestamp"),
+    ("@type", "wrong", "'prov:Activity' was expected"),
+    ("prov:used", None, "is not of type 'array'"),
+    ("prov:startedAtTime", "2026-02-30T00:00:00Z", "is not a 'date-time'"),
+    ("prov:endedAtTime", "2026-11-25T14:45:00", "is not a 'date-time'"),
 ])
 def test_run_provenance_values_must_match_their_expected_types(run, key, value, message):
     run["provenance"][key] = value
+    validator = Draft202012Validator(load_schema("fdo", "1"), format_checker=FormatChecker())
+    assert not validator.is_valid(run)
     assert has(validate(run), f"provenance/{key}", message)
 
 
@@ -212,13 +226,33 @@ def test_a_run_can_have_no_inputs_and_use_a_timestamp_with_an_offset(run):
 @pytest.mark.parametrize("key", ["episerveBenchmark", "accessRights"])
 def test_a_benchmark_requires_its_profile_fields(benchmark, key):
     del benchmark["profile"][key]
-    assert has(validate(benchmark), f"profile/{key}", "required for a benchmark")
+    assert has(validate(benchmark), "profile", f"'{key}' is a required property")
+
+
+def test_a_benchmark_requires_identity_commit_and_file_metadata(benchmark):
+    benchmark["profile"]["episerveBenchmark"] = {}
+    result = validate(benchmark)
+    for key in ("id", "data_commit", "files"):
+        assert has(result, "profile/episerveBenchmark", f"'{key}' is a required property")
+
+
+def test_a_benchmark_needs_input_and_reference_but_definition_is_optional(benchmark):
+    files = benchmark["profile"]["episerveBenchmark"]["files"]
+    del files["definition"]
+    assert validate(benchmark).valid
+    del files["reference"]
+    del files["input"]["rows"]
+    result = validate(benchmark)
+    assert has(result, "profile/episerveBenchmark/files", "'reference' is a required property")
+    assert has(result, "profile/episerveBenchmark/files/input", "'rows' is a required property")
 
 
 def test_a_benchmark_lists_its_sources_by_qid(benchmark):
-    benchmark["provenance"]["prov:wasDerivedFrom"] = ["Q1", {"@id": "Q2"}, "nonsense"]
+    benchmark["provenance"]["prov:wasDerivedFrom"] = ["Q1", {"@id": "Q2"}]
+    assert validate(benchmark).valid
+    benchmark["provenance"]["prov:wasDerivedFrom"].append("nonsense")
     result = validate(benchmark)
-    assert [i.path for i in result.errors] == ["provenance/prov:wasDerivedFrom/2"]
+    assert [i.path for i in result.errors] == ["provenance/prov:wasDerivedFrom"]
 
 
 def test_a_finalized_benchmark_should_be_immutable(benchmark):
