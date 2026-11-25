@@ -1,6 +1,6 @@
 # FDO, version 1
 
-**Since** package 0.6.0 · **Status:** draft. It describes what is stored today, and every existing record is valid. Until the writers check their output against it (planned) and it has been compared with the FDO Forum's profiles, stricter checks may be added, but only as warnings, so a record that is valid stays valid.
+**Since** package 0.6.0 · **Status:** draft. It describes what is stored today, and every existing record is valid. The writers (dataset downloader, model runner, API server) check their output against it in their tests; it has not yet been compared with the FDO Forum's profiles. Until then stricter checks may be added, but only as warnings, so a record that is valid stays valid.
 
 The metadata record (`<QID>.fdo.json`) of an object on the EPISERVE platform: a
 **raw dataset**, a **processed dataset**, a **model run** or a **benchmark**. The
@@ -22,7 +22,7 @@ Schema: `https://api.episerve.zib.de/schemas/fdo/v1.json`. Documents may name it
 | `provenance` | PROV; its keys depend on the kind |
 | `prov:wasGeneratedBy` | model runs only: `{"@id": "#run"}`, naming the provenance block |
 
-The three identifiers (`@id`, `kernel/@id`, `kernel/primaryIdentifier`, and `profile/@id`) are equal.
+The four identifiers (`@id`, `kernel/@id`, `kernel/primaryIdentifier` and `profile/@id`) are equal.
 
 ### Decisions of version 1
 

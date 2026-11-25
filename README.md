@@ -66,7 +66,7 @@ all get the same result. The result records which validator produced it.
 | API server | checks a run's config with `check_model_config` (`POST /model-runs`, and `POST /models/{model}/check-config` without starting a run) | available |
 | API server | `POST /validate/{spec}` for people, agents and the CLI (`episerve validate`); serves the schemas at `/schemas/{spec}/v{N}.json` and lists them at `/schemas` | available |
 | CKAN | the model page's "Model card" tab shows the card sections and the stored result | available |
-| Writers of FDOs (dataset downloader, model runner, benchmark designer) | in their tests, against the `fdo` spec | planned |
+| Writers of FDOs (dataset downloader, model runner, API server for benchmarks) | in their tests, against the `fdo` spec | available |
 
 The `conformsTo` URLs resolve: `https://api.episerve.zib.de/schemas/model-card/v1.json`
 serves the schema from the release the API server pins.
