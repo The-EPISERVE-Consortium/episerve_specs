@@ -12,6 +12,13 @@ spec text and examples.
 
 ## Use
 
+### Changes in v0.7.1
+
+Model cards accept JSON-LD spec references in `conformsTo`. Run configuration
+validation raises `InvalidParameterSchema` for unusable parameter declarations,
+including unresolved schema references. Parameter schemas resolve references
+within the document and use the standard bundled metaschemas.
+
 ### Changes in v0.7.0
 
 The FDO spec stays at draft v1. The release moves structural provenance rules
@@ -26,7 +33,7 @@ together so the API, CLI, and writer tests use the same rules.
 ### Install
 
 ```bash
-pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.7.0"
+pip install "git+https://github.com/The-EPISERVE-Consortium/episerve_specs@v0.7.1"
 
 episerve-validate fdo.json                     # spec from the file's conformsTo
 episerve-validate --spec model-card fdo.json   # name it (e.g. for a card without conformsTo)
@@ -45,7 +52,7 @@ result = validate(card)            # or validate(card, spec="model-card", versio
 result.valid                       # no errors (warnings allowed)
 for issue in result.issues:        # Issue(severity, path, message)
     print(issue)
-result.to_dict()                   # includes "validator": "episerve-specs 0.7.0"
+result.to_dict()                   # includes "validator": "episerve-specs 0.7.1"
 
 from episerve_specs import check_model_config
 check_model_config(card, config)   # a run's config.json against the card's episerve:parameters
@@ -54,14 +61,14 @@ check_model_config(card, config)   # a run's config.json against the card's epis
 As a dependency (no git needed):
 
 ```
-episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.7.0.tar.gz
+episerve-specs @ https://github.com/The-EPISERVE-Consortium/episerve_specs/archive/refs/tags/v0.7.1.tar.gz
 ```
 
 ### In a model repository's CI
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: The-EPISERVE-Consortium/episerve_specs@v0.7.0
+- uses: The-EPISERVE-Consortium/episerve_specs@v0.7.1
   with:
     files: fdo.json        # default
     strict: "false"        # default

@@ -27,6 +27,19 @@ def test_examples_only_warn_about_what_is_unknown(name):
     assert sorted(i.path for i in validate(load_example(name)).warnings) == ["episerve:resources", "license"]
 
 
+@pytest.mark.parametrize("in_list", [False, True])
+def test_model_card_conforms_to_accepts_a_json_ld_reference(timesfm, in_list):
+    reference = {"@id": timesfm["conformsTo"]}
+    timesfm["conformsTo"] = ["https://schema.org/SoftwareApplication", reference] if in_list else reference
+    result = validate(timesfm)
+    assert result.spec == "model-card" and result.valid, messages(result)
+
+
+def test_parameter_default_with_an_unresolved_reference_is_reported(timesfm):
+    timesfm["episerve:parameters"]["properties"]["prediction_offset"]["$ref"] = "#/$defs/missing"
+    assert has(validate(timesfm), "episerve:parameters/properties/prediction_offset/default", "unresolved schema reference")
+
+
 # ── required sections ─────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("key", ["episerve:task", "episerve:parameters", "episerve:inputs", "episerve:outputs", "url"])

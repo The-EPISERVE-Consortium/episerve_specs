@@ -26,10 +26,10 @@
     "conformsTo": {
       "description": "Names this spec version.",
       "anyOf": [
-        { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" },
+        { "$ref": "#/$defs/specReference" },
         {
           "type": "array",
-          "contains": { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" }
+          "contains": { "$ref": "#/$defs/specReference" }
         }
       ]
     },
@@ -92,6 +92,16 @@
   },
 
   "$defs": {
+    "specReference": {
+      "anyOf": [
+        { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" },
+        {
+          "type": "object",
+          "required": ["@id"],
+          "properties": { "@id": { "const": "https://api.episerve.zib.de/schemas/model-card/v1.json" } }
+        }
+      ]
+    },
     "agent": {
       "type": "object",
       "required": ["@type", "name"],

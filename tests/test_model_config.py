@@ -1,4 +1,6 @@
-from episerve_specs import check_model_config, model_config_defaults
+import pytest
+
+from episerve_specs import InvalidParameterSchema, check_model_config, model_config_defaults
 
 
 def paths(issues):
@@ -42,3 +44,20 @@ def test_config_must_be_an_object(timesfm):
 def test_defaults(timesfm, baseline):
     assert model_config_defaults(timesfm) == {"prediction_offset": 0}
     assert model_config_defaults(baseline["episerve:parameters"]) == {"horizon_weeks": 4, "n_reference_weeks": 4}
+
+
+@pytest.mark.parametrize("parameters", [[], None, {"properties": {"x": {"type": "typo"}}}])
+def test_invalid_parameter_declarations_raise_a_distinct_error(parameters):
+    with pytest.raises(InvalidParameterSchema, match="JSON Schema"):
+        check_model_config({"episerve:parameters": parameters}, {"x": 1})
+
+
+def test_invalid_schema_reference_is_reported_as_a_declaration_error():
+    with pytest.raises(InvalidParameterSchema, match="unresolved schema reference"):
+        check_model_config({"$ref": "#/$defs/missing"}, {})
+
+
+def test_local_schema_references_still_validate():
+    parameters = {"$defs": {"count": {"type": "integer"}}, "properties": {"x": {"$ref": "#/$defs/count"}}}
+    assert not check_model_config(parameters, {"x": 1})
+    assert check_model_config(parameters, {"x": "wrong"})[0].path == "x"

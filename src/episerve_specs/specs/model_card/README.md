@@ -32,7 +32,7 @@ wrong (no license, no memory figure, …).
 |---|---|---|
 | `@context` | yes | `["https://schema.org/", {"episerve": "https://api.episerve.zib.de/schemas/model-card/v1#"}]` |
 | `@type` | yes | `SoftwareApplication` |
-| `conformsTo` | yes | the URL above (or a list containing it) |
+| `conformsTo` | yes | the URL above, a JSON-LD object with that URL as `@id`, or a list containing either form |
 | `name` | yes | the repository name, `model__<type>__<dataset>__<variant>` |
 | `description` | yes | what the model does, in one sentence: at least 20 characters, at most 200 (a warning above). It is the summary shown in lists and page headers; method, input and output details go in `episerve:documentation`, `episerve:inputs` and `episerve:outputs`. |
 | `url` | yes | the container image **without a tag**, e.g. `ghcr.io/the-episerve-consortium/<repo>` |

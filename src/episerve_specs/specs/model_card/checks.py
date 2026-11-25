@@ -7,10 +7,10 @@ see and skips values of the wrong type.
 
 from __future__ import annotations
 
-from jsonschema import Draft202012Validator
-from jsonschema.exceptions import SchemaError
+from referencing.exceptions import Unresolvable
 
 from ...result import Issue
+from .config import InvalidParameterSchema, parameter_validator
 
 # The sections of the model card, without the "episerve:" prefix. The single list every
 # consumer uses (sync flow, API server, CKAN theme); a new section is added here and in
@@ -73,9 +73,9 @@ def _parameters(card: dict) -> list[Issue]:
     issues = []
 
     try:
-        Draft202012Validator.check_schema(params)
-    except SchemaError as e:
-        issues.append(Issue("error", base, f"is not a valid JSON Schema: {e.message}"))
+        validator = parameter_validator(params)
+    except InvalidParameterSchema as e:
+        issues.append(Issue("error", base, str(e)))
         return issues
 
     for i, name in enumerate(_list(params.get("required"))):
@@ -91,8 +91,11 @@ def _parameters(card: dict) -> list[Issue]:
             if name in required:
                 issues.append(Issue("error", f"{path}/default", "a required parameter must not have a default"))
             else:
-                for e in Draft202012Validator({k: v for k, v in spec.items() if k != "default"}).iter_errors(spec["default"]):
-                    issues.append(Issue("error", f"{path}/default", f"default does not fit the declaration: {e.message}"))
+                try:
+                    for e in validator.evolve(schema=spec, format_checker=None).iter_errors(spec["default"]):
+                        issues.append(Issue("error", f"{path}/default", f"default does not fit the declaration: {e.message}"))
+                except Unresolvable:
+                    issues.append(Issue("error", f"{path}/default", "cannot check default against an unresolved schema reference"))
         elif name not in required:
             issues.append(Issue("warning", path, "optional parameter without a default; say what the model does when it is left out"))
         low = spec.get("minimum", spec.get("exclusiveMinimum"))
